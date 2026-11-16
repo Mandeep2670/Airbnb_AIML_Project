@@ -1,0 +1,474 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airbnb AI | Price Prediction</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f6fa;
+            color: #202332;
+        }
+
+        header {
+            background: #ffffff;
+            padding: 20px 8%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ff385c;
+        }
+
+        .header-tag {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 45px auto;
+            padding: 0 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .hero h1 {
+            font-size: 38px;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            color: #697386;
+            font-size: 16px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1.3fr 0.7fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d9dce5;
+            border-radius: 9px;
+            font-size: 14px;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #ff385c;
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 15px;
+            background: #ff385c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            margin-top: 25px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .predict-btn:hover {
+            background: #e52e50;
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result {
+            text-align: center;
+            padding: 25px 0;
+        }
+
+        .result-label {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .price {
+            color: #ff385c;
+            font-size: 48px;
+            font-weight: 800;
+            margin: 15px 0;
+        }
+
+        .model-info {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .tips {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fc;
+            border-radius: 12px;
+        }
+
+        .tips h3 {
+            font-size: 16px;
+            margin-top: 0;
+        }
+
+        .tips li {
+            margin-bottom: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .error {
+            color: #d32f2f;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 35px;
+            color: #8a91a0;
+            font-size: 13px;
+        }
+
+        @media (max-width: 800px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 29px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">Airbnb AI Analytics</div>
+    <div class="header-tag">Machine Learning Price Estimator</div>
+</header>
+
+<main class="container">
+
+    <section class="hero">
+        <h1>AI-Powered Airbnb Price Prediction</h1>
+        <p>
+            Estimate nightly Airbnb listing prices using
+            machine learning and property information.
+        </p>
+    </section>
+
+    <div class="dashboard">
+
+        <section class="card">
+            <h2>Property Information</h2>
+
+            <form id="predictionForm">
+                <div class="form-grid">
+
+                    <div class="field">
+                        <label for="borough">NYC Borough</label>
+                        <select id="borough" required>
+                            <option>Manhattan</option>
+                            <option>Brooklyn</option>
+                            <option>Queens</option>
+                            <option>Bronx</option>
+                            <option>Staten Island</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="roomType">Room Type</label>
+                        <select id="roomType" required>
+                            <option>Entire home/apt</option>
+                            <option>Private room</option>
+                            <option>Shared room</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="latitude">Latitude</label>
+                        <input id="latitude" type="number"
+                               step="any" min="40" max="41"
+                               value="40.758" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="longitude">Longitude</label>
+                        <input id="longitude" type="number"
+                               step="any" min="-75" max="-73"
+                               value="-73.9855" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="minimumNights">Minimum Nights</label>
+                        <input id="minimumNights" type="number"
+                               min="1" value="2" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="reviews">Number of Reviews</label>
+                        <input id="reviews" type="number"
+                               min="0" value="25" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="reviewsPerMonth">Reviews per Month</label>
+                        <input id="reviewsPerMonth" type="number"
+                               min="0" step="0.01" value="1.5" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="hostListings">Host Listing Count</label>
+                        <input id="hostListings" type="number"
+                               min="1" value="1" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="availability">Availability (Days/Year)</label>
+                        <input id="availability" type="number"
+                               min="0" max="365" value="180" required>
+                    </div>
+
+                </div>
+
+                <button class="predict-btn"
+                        type="submit" id="predictBtn">
+                    Estimate Nightly Price
+                </button>
+
+                <p id="errorMessage" class="error"
+                   role="alert" aria-live="polite"></p>
+            </form>
+        </section>
+
+        <section class="card">
+
+            <h2>Prediction Result</h2>
+
+            <div class="result">
+                <div class="result-label">
+                    Estimated Nightly Price
+                </div>
+
+                <div class="price" id="predictedPrice">
+                    —
+                </div>
+
+                <p class="model-info" id="modelInfo">
+                    Enter property details to get an estimate.
+                </p>
+            </div>
+
+            <div class="tips">
+                <h3>Property Insights</h3>
+
+                <ul id="tipsList">
+                    <li>Location and room type may influence listing prices.</li>
+                    <li>Pricing estimates are based on historical NYC listings.</li>
+                    <li>Review your property details before prediction.</li>
+                </ul>
+            </div>
+
+        </section>
+    </div>
+
+</main>
+
+<footer>
+    Airbnb Listings Analysis | Advanced AI & ML Project
+    <p>
+        Educational price estimation based on historical
+        New York City Airbnb data from 2019.
+        Not affiliated with Airbnb.
+    </p>
+</footer>
+
+<script>
+    const form = document.getElementById("predictionForm");
+    const button = document.getElementById("predictBtn");
+    const errorMessage = document.getElementById("errorMessage");
+
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        errorMessage.textContent = "";
+        button.disabled = true;
+        button.textContent = "Analyzing...";
+
+        const data = {
+            neighbourhood_group:
+                document.getElementById("borough").value,
+
+            room_type:
+                document.getElementById("roomType").value,
+
+            latitude:
+                Number(document.getElementById("latitude").value),
+
+            longitude:
+                Number(document.getElementById("longitude").value),
+
+            minimum_nights:
+                Number(document.getElementById("minimumNights").value),
+
+            number_of_reviews:
+                Number(document.getElementById("reviews").value),
+
+            reviews_per_month:
+                Number(document.getElementById("reviewsPerMonth").value),
+
+            calculated_host_listings_count:
+                Number(document.getElementById("hostListings").value),
+
+            availability_365:
+                Number(document.getElementById("availability").value)
+        };
+
+        try {
+            const response = await fetch("/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const details = await response.json().catch(() => ({}));
+
+                if (response.status === 422) {
+                    throw new Error(
+                        "Invalid property details. Check the allowed input ranges."
+                    );
+                }
+
+                throw new Error(
+                    details.detail || "Prediction request failed."
+                );
+            }
+
+            const result = await response.json();
+
+            document.getElementById("predictedPrice")
+                .textContent = new Intl.NumberFormat(
+                    "en-US",
+                    {
+                        style: "currency",
+                        currency: "USD"
+                    }
+                ).format(result.predicted_price_usd);
+
+            document.getElementById("modelInfo")
+                .textContent = "Prediction model: " + result.model;
+
+            const tips = [];
+
+            if (data.room_type === "Entire home/apt") {
+                tips.push(
+                    "Entire homes and apartments often have different pricing patterns from private rooms."
+                );
+            } else {
+                tips.push(
+                    "Compare prices with similar room types in the same borough."
+                );
+            }
+
+            if (data.number_of_reviews === 0) {
+                tips.push(
+                    "This listing has no recorded reviews. Review activity may be useful context when comparing listings."
+                );
+            } else {
+                tips.push(
+                    "Compare review activity alongside price and location."
+                );
+            }
+
+            if (data.availability_365 === 0) {
+                tips.push(
+                    "No available days are recorded. Check whether the calendar is blocked or the listing is inactive."
+                );
+            } else {
+                tips.push(
+                    "Calendar availability does not necessarily represent actual occupancy."
+                );
+            }
+
+            const tipsList = document.getElementById("tipsList");
+            tipsList.replaceChildren();
+
+            tips.forEach(tip => {
+                const item = document.createElement("li");
+                item.textContent = tip;
+                tipsList.appendChild(item);
+            });
+
+        } catch (error) {
+            errorMessage.textContent = error.message;
+        } finally {
+            button.disabled = false;
+            button.textContent = "Estimate Nightly Price";
+        }
+    });
+</script>
+
+</body>
+</html>
